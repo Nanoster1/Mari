@@ -1,0 +1,167 @@
+﻿ @using System.ComponentModel.DataAnnotations
+@using System.ComponentModel.Design
+@using System.Security.Claims
+@using System.Text.RegularExpressions
+@using System.Web
+@using Humanizer
+@using Mari.Client.Common.Interfaces.Formatters
+@using Mari.Client.Common.Services
+@using Mari.Client.Models.Comments
+@using Microsoft.IdentityModel.JsonWebTokens
+@inject ICommentManager CommentManager
+@inject IDescriptionFormatter DescriptionFormatter
+ @inject IDateFormatter DateFormatter
+ @inject IAuthorizationService AuthorizationService 
+ @inject ICurrentUserManager CurrentUserManager
+ 
+ <MudPaper Elevation="0" Class="pt-2"> 
+    <MudStack > 
+        @foreach (var comment in UserComments)
+            {
+                <MudPaper Class="border-b pl-4 pb-4" Elevation="0">
+                        
+                    <MudPaper Class=" d-flex" Elevation="0">
+                        <MudAvatar Color="Color.Primary">M</MudAvatar>
+                        <MudPaper Class="d-flex align-center pl-4" Elevation="0">
+                            <MudText>@comment.UserName</MudText>
+                        </MudPaper>
+                        <MudSpacer/>
+                        <MudTooltip Text="Изменить" Style="width: auto">
+                            <MudIconButton OnClick="@(async () => { await StartUpdateComment(@comment);})"
+                                           Icon="@Icons.Filled.Edit" Color="Color.Primary" />
+                        </MudTooltip>
+                        <MudTooltip Text="Удалить" Style="width: auto">
+                            <MudIconButton OnClick="@(async () => { await DeleteComment(@comment.CommentId);})"
+                                           Icon="@Icons.Filled.Delete" Color="Color.Error" />
+                        </MudTooltip>
+                    </MudPaper>
+
+                    <MudPaper Class="pt-1" Elevation="0">
+                         <MudTooltip Text="@DateFormatter.FormatDate(comment.CreateDate)">
+                            <MudText Style="font-size: 14px;">@DateFormatter.Humanize(comment.CreateDate)</MudText>
+                        </MudTooltip>
+                    </MudPaper>
+
+                    <MudPaper Width="100%" Class="pt-2" Elevation="0">
+                        <MudText Style="width: 100%;
+                                            word-wrap: break-word;">
+                           @DescriptionFormatter.Format(comment.Content)
+                        </MudText>
+                    </MudPaper>
+                </MudPaper>
+            }
+    </MudStack>
+</MudPaper>
+ 
+ 
+<AuthorizeView>
+    <Authorized>
+         <MudPaper Elevation="3" Square="true" Class="border-b px-4 py-4 d-flex flex-column" Style="bottom: 0; position: sticky;">
+            <MudPaper Class="d-flex" Elevation="0">
+                <MudAvatar Color="Color.Primary">M</MudAvatar>
+                <MudPaper Class="d-flex align-center pl-4" Elevation="0">
+                    <MudText>@context.User.Identity?.Name</MudText>
+                </MudPaper>
+            </MudPaper>
+            <MudForm>
+                <MudTextField @bind-Value="@NewCommnet.Content" Lines="3" Label="Введите текст"
+                              Variant="Variant.Filled" Clearable="true"/>
+                <MudPaper Class="d-flex tooltip-comment" Elevation="0">
+                    <MudTooltip Text="Обновить" Style="width: auto">
+                        <MudIconButton Icon="@Icons.Filled.Refresh" OnClick="Refresh"/>
+                    </MudTooltip>
+                    <MudSpacer/>
+                    @if (!IsEdit)
+                    {
+                        <MudButton Class="my-2" OnClick="AddComment" Variant="Variant.Filled"
+                                   Color="Color.Primary" Style="width: fit-content">
+                            Отправить
+                        </MudButton>    
+                    }
+                    else
+                    {
+                        <MudButton Class="my-2 mr-1" OnClick="CancelEdit" Variant="Variant.Filled"
+                                   Color="Color.Primary" Style="width: fit-content" >
+                            Отменить
+                        </MudButton>
+                        <MudButton Class="my-2" OnClick="AddComment" Variant="Variant.Filled"
+                                   Color="Color.Primary" Style="width: fit-content">
+                            Изменить
+                        </MudButton>    
+                    }
+                    
+                </MudPaper>
+            </MudForm>
+        </MudPaper>
+    </Authorized>
+</AuthorizeView>
+ 
+    
+@code {
+
+    string id { get; set; }
+    
+    [Parameter]
+    public string ReleaseId { get; set; } = null!;
+
+    private bool IsEdit { get; set; } = false;
+    
+    private IList<CommentModel> UserComments { get; set; } = new List<CommentModel>();
+
+    private CommentModel NewCommnet { get; set; } = new CommentModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserComments = await CommentManager.GetAllUserComment(Guid.Parse(ReleaseId));
+        
+    }
+    
+
+    private async Task AddComment()
+    {
+        if (!IsEdit) 
+        { // добавляем новый
+            NewCommnet.ReleaseId = new Guid(ReleaseId);
+            NewCommnet.UserId = (await CurrentUserManager.Get()).Id;
+            
+            await CommentManager.Create(NewCommnet);
+        }
+        else
+        {
+            await CommentManager.UpdateComment(NewCommnet);
+            IsEdit = false;
+        }
+        UserComments = await CommentManager.GetAllUserComment(Guid.Parse(ReleaseId));
+        
+        NewCommnet.Content = String.Empty;
+        StateHasChanged();
+    }
+
+    private async Task DeleteComment(Guid Id)
+    {
+        await CommentManager.DeleteComment(Id);
+        UserComments = await CommentManager.GetAllUserComment(Guid.Parse(ReleaseId));
+        StateHasChanged();
+    }
+
+    private async Task StartUpdateComment(CommentModel commentModel)
+    {
+        IsEdit = true;
+        NewCommnet.CommentId = commentModel.CommentId;
+        NewCommnet.Content = commentModel.Content;
+    }
+    
+    private async Task Refresh()
+    {
+         UserComments = await CommentManager.GetAllUserComment(Guid.Parse(ReleaseId));
+         StateHasChanged();
+    }
+
+    private async Task CancelEdit()
+    {
+        IsEdit = false;
+        NewCommnet.Content = String.Empty;
+        
+    }
+}
+

@@ -1,0 +1,10 @@
+﻿<!-- Saved -->
+@inject IAuthenticationService _authService
+
+@code
+{
+    protected override void OnInitialized()
+    {
+        _authService.Authenticate();
+    }
+}

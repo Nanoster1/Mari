@@ -1,0 +1,153 @@
+@using Contracts.Releases
+@using Mari.Client.Common.Http.ProblemsHandling
+@using Mari.Client.Models.Releases
+@using Mari.Contracts.Releases.Responses
+@using Mari.Http.Models
+@using Microsoft.Extensions.Options
+@inject IReleaseManager ReleaseManager
+
+
+<MudPaper Class="" Elevation="0">
+    <MudCard Class="border card-create-release">
+              
+        <MudForm @ref="_form" Model="@Release" @bind-IsValid="@_success">
+            <MudCardActions Class="pb-0">
+                <!-- TODO доделать OnClick -->
+                <MudIconButton Class="ml-auto" OnClick="SwitchDimming" Icon="@Icons.Filled.Close" />
+            </MudCardActions>
+
+            <MudCardContent Class="pt-0">
+                
+                
+                <MudDatePicker @bind-Date="Release.CompleteDateTime" @ref="DatePicker" Label="Дата Завершения">
+                    <PickerActions>
+                        <MudButton Class="mr-auto align-self-start" OnClick="@(() => DatePicker.Clear())">Очистить</MudButton>
+                        <MudButton OnClick="@(() => DatePicker.Close(false))">Закрыть</MudButton>
+                        <MudButton Color="Color.Primary" OnClick="@(() => DatePicker.Close())">Сохранить</MudButton>
+                    </PickerActions>
+                </MudDatePicker>
+                
+                <MudAutocomplete ResetValueOnEmptyText="true"
+                                 Immediate="true" T="string" Label="Платформа" CoerceValue="true"
+                                 @bind-Value="PlatformName" SearchFunc="@SearchPlatform"
+                                 Validation="@(new Func<string, IEnumerable<string>>(ValidatePlatform))" Required/>
+
+                <MudContainer Class="flex-row d-flex align-end px-0 flex-grow-1 gap-1">
+                    <MudText >Версия: </MudText>
+                    <MudTextField @bind-Value="Release.Version.Major"  Class="flex-none" Style="max-width: 28px"
+                                  Variant="Variant.Text" MaxLength="2" Immediate="true"
+                                  Required RequiredError="@String.Empty"/>
+                    <MudText >.</MudText>
+                    <MudTextField @bind-Value="Release.Version.Minor" Class="flex-none" Style="max-width: 28px"
+                                  Variant="Variant.Text" MaxLength="2" Immediate="true"
+                                  Required RequiredError="@String.Empty"/>
+                    <MudText>.</MudText>
+                    <MudTextField @bind-Value="Release.Version.Patch" Class="flex-none" Style="max-width: 28px"
+                                  Variant="Variant.Text" MaxLength="2" Immediate="true"
+                                  Required RequiredError="@String.Empty"/>
+                </MudContainer>
+
+                <MudTextField @bind-Value="Release.MainIssue"  Immediate="true"
+                    Label="Ссылка на релиз задачу" />
+
+                <MudTextField @bind-Value="Release.Description" Immediate="true"
+                    Variant="Variant.Filled" Lines="5" Label="Информация" />
+
+            </MudCardContent>
+
+            <MudCardActions>
+                <MudButton @onclick="ClickOnCreateRelease" Variant="Variant.Filled"
+                           Color="Color.Primary" Class="mx-auto">
+                    Добавить
+                </MudButton>
+            </MudCardActions>
+        </MudForm>
+    </MudCard>
+</MudPaper>
+
+
+
+@code {
+
+    string PlatformName
+    {
+        get => Release.PlatformName;
+        set
+        {
+            Release.PlatformName = value;
+            var version = Platforms.FirstOrDefault(p => p.Name == value)?.LastVersion;
+            if (version is not null) Release.Version = version;
+        }
+    }
+
+    private MudForm _form;
+    private bool _success;
+    private MudDatePicker DatePicker;
+
+    [Parameter]
+    public Action OnAddRelease { get; set; }
+
+    [Parameter]
+    public Action SwitchDimming { get; set; }
+
+    [Parameter]
+    public Func<Task> SwitchDimmingAdd { get; set; }
+
+
+    private ReleaseModel Release { get; set; } = new();
+    private IList<PlatformModel> Platforms { get; set; } 
+
+    private string[] AllNamePlatforms { get; set; }
+
+    [Inject] private IDialogService DialogService { get; set; }
+    
+    public async Task ClickOnCreateRelease()
+    {
+        if ((Release.PlatformName is not null || 
+             Release.PlatformName != String.Empty) &&
+            (Release.Version.Major != 0 ||
+             Release.Version.Patch != 0 ||
+             Release.Version.Minor != 0))
+        {
+            await ReleaseManager.Create(Release);
+            Platforms = new List<PlatformModel>();
+            AllNamePlatforms = null;
+            SwitchDimmingAdd();    
+        }
+        else
+        {
+            bool? result = await DialogService.ShowMessageBox(
+                "Внимание", 
+                "Пожалуйста, заполните поля \"Платформа\" и \"Версия\"", 
+                yesText:"Хорошо");
+        }
+    }
+
+    private async Task<IEnumerable<string>> SearchPlatform(string value)
+    {
+        return string.IsNullOrEmpty(value) ? AllNamePlatforms
+            : AllNamePlatforms.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Platforms = await ReleaseManager.GetAllPlatforms();
+        
+    // TODO Тестовые данные
+            /*Platforms = new List<PlatformResponse>()
+            {
+                new PlatformResponse("Android", 1, 1, 1),
+                new PlatformResponse("Ios", 1, 1, 1)
+            };*/
+        // конец
+
+            AllNamePlatforms = Platforms.ToList().Select(x => x.Name).ToArray();
+    }
+
+    private IEnumerable<string> ValidatePlatform(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value)) yield break;
+        yield return "Заполните платформу";
+    }
+
+}

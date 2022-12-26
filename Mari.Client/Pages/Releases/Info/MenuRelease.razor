@@ -1,0 +1,25 @@
+﻿@using Mari.Contracts.Releases
+
+<MudDrawerHeader Class="pa-0" Style="height: 100%">
+    <MudPaper Elevation="0" Width="100%">
+        <MudTabs Class="pa-0 tabs-in-info"  Rounded="true" Style="height: 100%">
+            <MudTabPanel Class="text-size-6" Text="Комментарии" >
+                <TabsComment ReleaseId="@Id"/>
+            </MudTabPanel>
+            
+            <MudTabPanel Class="text-size-6" Text="История релиза">
+                <TabsHist ReleaseId="@Id"/>
+            </MudTabPanel>
+        </MudTabs >
+    </MudPaper>
+</MudDrawerHeader>
+
+
+@code {
+    [Parameter]
+    public Action ClickOnEditingRelease { get; set; } = () => { };
+    
+    
+    [Parameter]
+    public string Id { get; set; } = null!;
+}

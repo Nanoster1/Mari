@@ -1,0 +1,18 @@
+@attribute [Route(ClientRoutes.Pages.TokenHandler)]
+@layout EmptyLayout
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService AuthenticationService
+
+@code
+{
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string Token { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Token.ThrowIfNull();
+        await AuthenticationService.LoginAsync(Token);
+        NavigationManager.NavigateTo(ClientRoutes.Pages.Index, true);
+    }
+}

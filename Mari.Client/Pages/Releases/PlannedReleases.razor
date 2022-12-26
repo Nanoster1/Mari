@@ -1,0 +1,21 @@
+﻿<PageTitle>Запланированный релиз</PageTitle>
+<MudPaper Elevation="0" Class="px-16">
+    <MudPaper Elevation="0" Class="d-flex justify-space-between" Width="100%">
+        <MudText Typo="Typo.h4">Запланированные релизы</MudText>
+        <MudButton Variant="Variant.Filled" OnClick="SwitchDimming" Color="Color.Primary"> Создать новый релиз
+        </MudButton>
+    </MudPaper>
+    <TablePlanned IsDimming="IsDimming" SwitchDimming="SwitchDimming"/>
+</MudPaper>
+
+
+@code {
+  
+    private bool IsDimming { get; set; }
+
+    private async Task SwitchDimming()
+    {
+        IsDimming = !IsDimming;
+        StateHasChanged();
+    }
+}

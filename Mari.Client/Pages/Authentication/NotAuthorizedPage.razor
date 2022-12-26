@@ -1,0 +1,22 @@
+@inject IAuthenticationService _authService
+
+<MudCardContent Style="height: 90vh" Class="d-flex justify-center align-center">
+    <MudCard Style="width: fit-content;">
+        <MudCardContent>
+            <MudText>Вход</MudText>
+            <MudText Typo="Typo.body2">Пожалуйста, войдите перед тем как начать работу</MudText>
+        </MudCardContent>
+        <MudCardActions >
+            <MudButton Class="mx-auto" OnClick="BeginLogin" Variant="Variant.Text" Color="Color.Primary">Войти</MudButton>
+        </MudCardActions>
+    </MudCard>
+</MudCardContent>
+
+
+@code{
+
+    private void BeginLogin()
+    {
+        _authService.Authenticate();
+    }
+}

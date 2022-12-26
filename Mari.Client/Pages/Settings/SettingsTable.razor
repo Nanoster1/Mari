@@ -1,0 +1,187 @@
+﻿ @using Contracts.Releases
+ @using Mari.Client.Models.Releases
+ @using Mari.Client.Models.Users
+ @using Mari.Contracts.Releases.Responses
+ @using Microsoft.AspNetCore.Components
+@inject IReleaseManager ReleaseManager
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IUserManager UserManager
+
+ <MudTable Class="mt-8" CanCancelEdit="true"
+          RowEditPreview="BackupItem" RowEditCancel="ResetItemToOriginalValues" RowEditCommit="ItemHasBeenCommitted"
+          CommitEditTooltip="Сохранить" LoadingProgressColor="Color.Primary" Loading="_loading"
+          Filter="new Func<UserModel,bool>(FilterFunc)"
+          OnCommitEditClick="@(() => Snackbar.Add("Изменения сохранены"))"
+          EditTrigger="@editTrigger"
+          Items="@Users" Hover="true" T="UserModel" >
+           <ToolBarContent>
+                  <MudText Typo="Typo.h6">Настройки</MudText>
+                  <MudSpacer />
+                  <MudTextField @bind-Value="searchString" Placeholder="Поиск по пользователю, роли" Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+              </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Пользователь</MudTh>
+        <MudTh>Роль</MudTh>
+        <MudTh>Уведомления</MudTh>
+        <MudTh>Активен</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="User">@context.Username</MudTd>
+        <MudTd DataLabel="Role">@context.Role</MudTd>
+        <MudTd DataLabel="Notifications" >@GetMultiSelectionText(context.Notifications)</MudTd>
+        <MudTd DataLabel="IsActive">
+            <MudCheckBox @bind-Checked="@context.IsActive" Disabled="true"></MudCheckBox>       
+        </MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd DataLabel="User">
+            @context.Username
+        </MudTd>
+        <MudTd DataLabel="Role">
+           <div @onclick:stopPropagation="true" @onclick:preventDefault="true">
+               <MudSelect @bind-Value="@context.Role" Required>
+                   @foreach (var item in Enum.GetValues<UserRole>())
+                   {
+                       <MudSelectItem Value="@item">@item</MudSelectItem>
+                   }
+               </MudSelect>
+           </div>
+        </MudTd>
+        <MudTd DataLabel="Notifications">
+           <div @onclick:stopPropagation="true" @onclick:preventDefault="true">
+               <MudSelect T="string" MultiSelection="true" SelectAll="true" SelectAllText="Включены все уведомления" 
+                           @bind-Value="value" @bind-SelectedValues="Selected"
+                          MultiSelectionTextFunc="@(new Func<IList<string>, string>(GetMultiSelectionText))" Label="Notifications"
+                          AdornmentIcon="@Icons.Material.Filled.Search">
+                   @foreach (var item in Platforms)
+                   {
+                    <MudSelectItem T="string" Value="@item.Name">@item.Name</MudSelectItem>
+                   }
+               </MudSelect>
+           </div>
+        </MudTd>
+        <MudTd DataLabel="IsActive">
+            <div @onclick:stopPropagation="true" @onclick:preventDefault="true">
+                <MudCheckBox @bind-Checked="@context.IsActive" >
+
+                </MudCheckBox>
+            </div>
+        </MudTd>
+    </RowEditingTemplate>
+    <EditButtonContent Context="button">
+        <MudIconButton Size="@Size.Small" Icon="@Icons.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+    </EditButtonContent>
+</MudTable>
+
+@code
+{
+    private bool _loading;
+    private TableEditTrigger editTrigger = TableEditTrigger.EditButton;
+    private UserModel elementBeforeEdit;
+    private string searchString = "";
+
+    private IList<UserModel> Users { get; set; } = new List<UserModel>();
+    private string value { get; set; } = "Ничего не выбрано";
+    private IList<PlatformModel> Platforms { get; set; } = new List<PlatformModel>();
+    private IEnumerable<string> Selected { get; set; } = new List<string>() { };
+    
+    private void BackupItem(object user)
+    {
+        /*elementBeforeEdit = new UserModel
+        (
+            ((UserModel)user).Id,
+            ((UserModel)user).Username,
+             ((UserModel)user).Role,
+            new List<string>(((UserModel)user).Notifications),
+             ((UserModel)user).IsActive
+        );*/
+        Selected = new List<string>(((UserModel)user).Notifications);
+        
+        StateHasChanged();
+    }
+
+    private void ResetItemToOriginalValues(object user)
+    {
+        ((UserModel)user).Username = elementBeforeEdit.Username;
+        ((UserModel)user).Role = elementBeforeEdit.Role;
+        ((UserModel)user).Notifications = new List<string>(elementBeforeEdit.Notifications);
+        ((UserModel)user).IsActive = elementBeforeEdit.IsActive;
+        StateHasChanged();
+    }
+    
+    private void ItemHasBeenCommitted(object user)
+    {
+        ((UserModel)user).Notifications = new List<string>(Selected);
+        StateHasChanged();
+    }
+    
+    private bool FilterFunc(UserModel user)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (user.Username.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+       // if (user.Role.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        //    return true;
+        if ($"{user.Username} {user.Role}".Contains(searchString))
+            return true;
+        return false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+    // Users = await UserManager.GetAll();
+    //   Platforms = await PlatformManager.GetAll();
+        
+        
+    // TODO Тестовые данные
+        /*Users = new List<UserModel>()
+            {
+                new UserModel()
+                {
+                    Id = 0,
+                    Username = "Putin",
+                    Role = UserRole.ReleaseManager,
+                    Notifications = new List<string>()
+                    {
+                        "Android",
+                        "IOS"
+                    
+                    },
+                    IsActive = true
+                },
+                
+                new UserModel()
+                {
+                    Id = 1,
+                    Username = "Abeme",
+                    Role = UserRole.Guest,
+                    Notifications = new List<string>()
+                    {
+                        "Android",
+                        "IOS"
+                    
+                    },
+                    IsActive = true
+                },
+            };*/
+        Platforms = await ReleaseManager.GetAllPlatforms();
+    // конец
+
+    }
+    
+    private string GetMultiSelectionText(IList<string> selectedValues)
+    {
+        return $"Уведомления приходят по {selectedValues.Count} {(selectedValues.Count == 1 ? "платформе" : "платформам")}";
+    }
+    
+    // private async Task UpdateReleases()
+    // {
+    //     _loading = true;
+    //     Releases = await ReleaseManager.GetPlanned();
+    //     _loading = false;
+    // }
+} 

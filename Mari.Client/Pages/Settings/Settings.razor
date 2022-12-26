@@ -1,0 +1,30 @@
+﻿ @attribute [Route(ClientRoutes.Pages.Settings)]
+
+<PageTitle>Пользователи</PageTitle>
+
+<MudMainContent Class="main-content mt-0 pt-0 ml-0">
+    <MudPaper Elevation="0">
+
+        <MudContainer Style="display: flex; flex-direction: row;">
+
+            <MudContainer Style="display: flex; flex-direction: column;">
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@ClientRoutes.Pages.Index">Вернуться
+                </MudButton>
+
+
+
+            </MudContainer>
+
+        </MudContainer>
+
+        <MudPaper Class="px-16 mt-8" Elevation="0">
+            <SettingsTable/>
+        </MudPaper> 
+    </MudPaper>
+</MudMainContent>
+
+
+@code {
+    
+} 

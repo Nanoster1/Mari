@@ -1,0 +1,23 @@
+﻿@inject IAuthenticationService _authService
+
+<AuthorizeView>
+    <Authorized>
+        <button class="nav-link btn btn-link" @onclick="BeginLogout">Log out</button>
+    </Authorized>
+    <NotAuthorized>
+        <button class="nav-link btn btn-link" @onclick="BeginLogin">Log in</button>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code
+{
+    private async Task BeginLogout()
+    {
+        await _authService.LogoutAsync();
+    }
+
+    private void BeginLogin()
+    {
+        _authService.Authenticate();
+    }
+}

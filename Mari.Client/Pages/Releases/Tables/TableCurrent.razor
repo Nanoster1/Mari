@@ -1,0 +1,102 @@
+﻿@using Mari.Contracts.Releases
+@using Mari.Contracts.Releases.Responses
+@using Mari.Client.Models.Releases
+@using Mari.Client.Common.Interfaces.Formatters
+@inject IReleaseManager ReleaseManager
+@inject NavigationManager NavigationManager
+@inject IDateFormatter DateFormatter
+
+ <MudTable Class="my-8" Items="@Releases" Hover="true" T="ReleaseModel" RowsPerPage="5" 
+           OnRowClick="RowClicked" Filter="new Func<ReleaseModel,bool>(FilterFunc)"
+           LoadingProgressColor="Color.Primary" Loading="_loading">
+     <ToolBarContent>
+         <MudTooltip Text="Обновить">
+             <MudIconButton Icon="@Icons.Filled.Refresh" OnClick="Refresh"/>
+         </MudTooltip>
+         <MudSpacer/>
+         <MudTextField @bind-Value="_searchString" Placeholder="Поиск по платформе, версии и полной дате завершения"
+                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
+     </ToolBarContent>
+     <ColGroup>
+        <col style="width: 16%;"/>
+        <col style="width: 16%;"/>
+        <col style="width: 16%;"/>
+        <col style="width: 20%;"/>
+        <col style="width: 16%;"/>
+        <col style="width: 16%;"/>
+        <col>
+     </ColGroup>
+     <HeaderContent>
+         <MudTh>Платформа</MudTh>
+         <MudTh>Версия</MudTh>
+         <MudTh>Релизная задача</MudTh>
+         <MudTh>Статус релиза</MudTh>
+         <MudTh>Дата изменения</MudTh>
+         <MudTh>Дата завершения</MudTh>
+     </HeaderContent>
+     <RowTemplate>
+         <MudTd DataLabel="PlatformName">@context.PlatformName</MudTd>
+         <MudTd DataLabel="Version">
+             @($"{context.Version.Major.ToString()}." +
+               $"{context.Version.Minor.ToString()}." +
+               $"{context.Version.Patch.ToString()}")
+         </MudTd>
+         <MudTd DataLabel="ReleaseTask">
+             <div @onclick:stopPropagation="true">
+                 <MudLink Href="@context.MainIssue">@_url</MudLink>
+             </div>
+         </MudTd>
+         <MudTd DataLabel="ReleaseStatus">@context.Status</MudTd>
+         <MudTd DataLabel="UpdateDate"> @DateFormatter.FormatDateTime(context.UpdateDate)</MudTd>
+         <MudTd DataLabel="CompleteDate">
+             <MudContainer>
+                 @DateFormatter.FormatDate(context.CompleteDate)
+             </MudContainer>
+         </MudTd>
+     </RowTemplate>
+     <PagerContent>
+         <MudTablePager HideRowsPerPage="true"/>
+     </PagerContent>
+ </MudTable>
+ @code
+ {
+     private bool _loading;
+     private string _url = "Ссылка на задачу";
+     private string _searchString = "";
+
+     private IList<ReleaseModel> Releases { get; set; } = new List<ReleaseModel>();
+
+     private async Task UpdateReleases()
+     {
+         _loading = true;
+         Releases = await ReleaseManager.GetCurrent();
+         _loading = false;
+     }
+     
+     protected override async Task OnInitializedAsync()
+     {
+         await UpdateReleases();
+     }
+
+     private void RowClicked(TableRowClickEventArgs<ReleaseModel> _)
+     {
+         NavigationManager.NavigateTo($"/info/{_.Item.Id}");
+     }
+
+     private bool FilterFunc(ReleaseModel answer)
+     {
+         if (string.IsNullOrEmpty(_searchString))
+             return true;
+         if (answer.PlatformName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+             return true;
+         if (answer.CompleteDate.ToString()!.Contains(_searchString))
+             return true;
+         return $"{answer.Version.Major}.{answer.Version.Minor}.{answer.Version.Patch}".Contains(_searchString);
+     }
+
+     private async Task Refresh()
+     {
+         await UpdateReleases();
+         StateHasChanged();
+     }
+ }

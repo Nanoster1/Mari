@@ -1,0 +1,76 @@
+﻿@using Mari.Client.Common.Http.ProblemsHandling
+@using Mari.Http.Models
+@inherits LayoutComponentBase
+@implements IDisposable 
+@inject ProblemHandler ProblemHandler
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Bottom="true" Fixed="true">
+        <AppBar DrawerButtonOnClick="DrawerButtonOnClick" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="IsDrawerOpened">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent Class="pt-0">
+        @*<AuthorizeView>
+            <Authorized>
+                    @Body
+            </Authorized>
+            $1$<NotAuthorized>
+                <NotAuthorizedPage />
+            </NotAuthorized>#1#
+        </AuthorizeView>*@
+        @Body
+     </MudMainContent>
+    
+    @*<CascadingValue Value="ShowError">#1#
+        
+      </CascadingValue >#1#*@
+ 
+    
+    
+</MudLayout>
+
+@code
+{
+    
+    [Inject] IDialogService DialogService {get;set;}
+    
+    private async Task ShowError(ProblemDetails problemDetails)
+    {
+        var message = $"Статусный код: {problemDetails.Status}";
+        message += !string.IsNullOrWhiteSpace(problemDetails.Detail)
+            ? $"<br/>Ошибка: {problemDetails.Detail}"
+            : string.Empty;
+
+        await DialogService.ShowMessageBox(
+            problemDetails.Title, 
+            (MarkupString) message, 
+            yesText:"Ok!");
+        
+    }
+
+    protected override void OnInitialized()
+    {
+        ProblemHandler.ErrorProblemEvent += ShowError;
+    }
+    
+ 
+    public void Dispose()
+    {
+        ProblemHandler.ErrorProblemEvent -= ShowError;
+    }
+    
+    private bool IsDrawerOpened { get; set; }
+
+    private void DrawerButtonOnClick()
+    {
+        IsDrawerOpened = !IsDrawerOpened;
+    }
+
+}

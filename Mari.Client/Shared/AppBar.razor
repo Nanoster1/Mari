@@ -1,0 +1,13 @@
+<AuthorizeView>
+    <Authorized>
+        <MudIconButton Icon="@Icons.Outlined.ClearAll" OnClick="DrawerButtonOnClick" Color="Color.Inherit" />
+    </Authorized>
+</AuthorizeView>
+<MudSpacer />
+<LoginDisplay />
+
+@code
+{
+    [Parameter]
+    public Action DrawerButtonOnClick { get; set; } = () => { };
+}

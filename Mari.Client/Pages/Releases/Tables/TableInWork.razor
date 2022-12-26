@@ -1,0 +1,251 @@
+﻿@using Contracts.Releases
+@using Mari.Client.Models.Releases
+@using Mari.Contracts.Releases.Responses
+@using Microsoft.AspNetCore.Components
+@using System.Xml.Linq
+@using Mari.Client.Common.Interfaces.Formatters
+@using Mari.Client.Models.Comments
+@inject IReleaseManager ReleaseManager
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IDateFormatter DateFormatter
+
+<MudTable Items="@Releases" Hover="true" T="ReleaseModel" Class="my-8" CanCancelEdit="true"
+          RowEditPreview="BackupItem" RowEditCancel="ResetItemToOriginalValues" RowEditCommit="ItemHasBeenCommitted"
+          CommitEditTooltip="Сохранить" CancelEditTooltip="Отменить" RowsPerPage="5"
+          EditTrigger="@editTrigger" Filter="new Func<ReleaseModel,bool>(FilterFunc)"
+          OnCommitEditClick="@(() => { Snackbar.Add("Изменения сохранены"); _clickOnRow = true; })"
+          OnCancelEditClick="@(() => { Snackbar.Add("Отменено"); _clickOnRow = true; })"
+          OnPreviewEditClick="@(() => _clickOnRow = false)" OnRowClick="RowClicked"
+          LoadingProgressColor="Color.Primary" Loading="_loading"> 
+    <ToolBarContent>
+        <MudTooltip Text="Обновить">
+            <MudIconButton Icon="@Icons.Filled.Refresh" OnClick="Refresh"/>
+        </MudTooltip>
+        <MudSpacer/>
+        <MudTextField @bind-Value="_searchString" Placeholder="Поиск по платформе, версии, статусу и полной дате завершения"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width: 10%;"/>
+        <col style="width: 16%;"/>
+        <col style="width: 16%;"/>
+        <col style="width: 20%;"/>
+        <col style="width: 20%;"/>
+        <col style="width: 20%;"/>
+        <col/>
+        <col/>
+    </ColGroup>
+    <HeaderContent>
+        <MudTh>Платформа</MudTh>
+        <MudTh>Версия</MudTh>
+        <MudTh>Релизная задача</MudTh>
+        <MudTh>Статус релиза</MudTh>
+        <MudTh>Дата изменения</MudTh>
+        <MudTh>Дата завершения</MudTh>
+        <MudTh/>
+        <MudTh/>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="PlatformName">@context.PlatformName</MudTd>
+        <MudTd DataLabel="Version">
+            @($"{context.Version.Major.ToString()}." +
+              $"{context.Version.Minor.ToString()}." +
+              $"{context.Version.Patch.ToString()}")
+        </MudTd>
+        <MudTd DataLabel="ReleaseTask">
+            <div @onclick:stopPropagation="true">
+                <MudLink Href="@context.MainIssue">@_url</MudLink>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="Status">@context.Status</MudTd>
+         <MudTd DataLabel="UpdateDate">
+                <MudTooltip Text="@DateFormatter.FormatDateTime(context.UpdateDate)">
+                        <MudText>@DateFormatter.Humanize( context.UpdateDate)</MudText>
+                </MudTooltip>
+        </MudTd>
+        <MudTd DataLabel="CompleteDate">
+            <MudTooltip Text="@DateFormatter.FormatDate(context.CompleteDate)">
+                <MudText>@DateFormatter.Humanize(context.CompleteDate)</MudText>
+            </MudTooltip>
+        </MudTd>
+        <MudTd>
+            <div @onclick:stopPropagation="true">
+                <MudTooltip Text="Завершить">
+                    <MudIconButton Class="pa-0" OnClick="@(() => Trans(context))"
+                                   Icon="@Icons.Filled.CancelScheduleSend"
+                                   Size="@Size.Medium" Color="Color.Primary"/>
+                </MudTooltip>
+            </div>
+        </MudTd>
+        <MudTd>
+            <div @onclick:stopPropagation="true">
+                <MudTooltip Text="Удалить">
+                    <MudIconButton Class="pa-0" OnClick="@(() => DeleteRelease(context))" Icon="@Icons.Filled.Delete"
+                                   Size="@Size.Medium" Color="Color.Error">
+                    </MudIconButton>
+                </MudTooltip>
+            </div>
+        </MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd DataLabel="PlatformName">
+            @context.PlatformName
+        </MudTd>
+        <MudTd DataLabel="Version">
+            @($"{context.Version.Major.ToString()}." +
+              $"{context.Version.Minor.ToString()}." +
+              $"{context.Version.Patch.ToString()}")
+        </MudTd>
+        <MudTd DataLabel="ReleaseTask">
+            @context.MainIssue
+        </MudTd>
+        <MudTd DataLabel="Status">
+            <MudSelect @bind-Value="@context.Status" Required>
+                @foreach (var item in Enum.GetValues<ReleaseStatus>())
+                {
+                    <MudSelectItem Value="@Convert.ToString(item)">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudTd>
+        <MudTd DataLabel="UpdateDate">@context.UpdateDate.ToString()</MudTd>
+        <MudTd>
+            <MudDatePicker Context="_picker" @bind-Date="@context.CompleteDateTime" @ref="_datePicker"
+                           PickerVariant="PickerVariant.Dialog">
+                <PickerActions>
+                    <MudButton Class="mr-auto align-self-start" OnClick="@(() => _datePicker.Clear())">
+                        Очистить
+                    </MudButton>
+                    <MudButton OnClick="@(() => _datePicker.Close(false))">
+                        Закрыть
+                    </MudButton>
+                    <MudButton Color="Color.Primary" OnClick="@(() => _datePicker.Close())">
+                        Сохранить
+                    </MudButton>
+                </PickerActions>
+            </MudDatePicker>
+        </MudTd>
+        <MudTd>
+            <MudIconButton Class="pa-0" Icon="@Icons.Filled.CancelScheduleSend"
+                           Disabled="true" Size="@Size.Medium" Color="Color.Primary"/>
+        </MudTd>
+        <MudTd>
+            <MudIconButton Class="pa-0" Icon="@Icons.Filled.Delete"
+                           Disabled="true" Size="@Size.Medium" Color="Color.Error">
+            </MudIconButton>
+        </MudTd>
+    </RowEditingTemplate>
+    <PagerContent>
+        <MudTablePager HideRowsPerPage="true"/>
+    </PagerContent>
+    <EditButtonContent Context="button">
+        <MudTooltip Text="Изменить">
+            <MudIconButton Size="@Size.Medium" Icon="@Icons.Outlined.Edit" Class="pa-0"
+                           OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled"/>
+        </MudTooltip>
+    </EditButtonContent>
+</MudTable>
+
+@code
+{
+    //Todo отправить изменение
+    
+    private MudDatePicker _datePicker;
+    private bool _loading;
+    private string _url = "Ссылка на задачу";
+    bool _clickOnRow = true;
+    private string _searchString = "";
+    private TableEditTrigger editTrigger = TableEditTrigger.EditButton;
+    private ReleaseModel elementBeforeEdit;
+    
+    private IList<ReleaseModel> Releases { get; set; } = new List<ReleaseModel>();
+    
+    private async Task UpdateReleases()
+    {
+        _loading = true;
+        Releases = await ReleaseManager.GetInWork();
+        _loading = false;
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateReleases();
+    }
+
+    private void RowClicked(TableRowClickEventArgs<ReleaseModel> _)
+    {
+        if (_clickOnRow)
+        {
+            NavigationManager.NavigateTo($"/info/{_.Item.Id}");
+        }
+    }
+
+    private void BackupItem(object obj)
+    {
+        var release = (ReleaseModel)obj;
+
+        elementBeforeEdit = new ReleaseModel
+        {
+            Id = release.Id,
+            Version = release.Version,
+            PlatformName = release.PlatformName,
+            Status = release.Status,
+            CompleteDate = release.CompleteDate,
+            UpdateDate =release.UpdateDate,
+            MainIssue = release.MainIssue,
+            Description =release.Description
+        };
+        StateHasChanged();
+    }
+
+    private void ResetItemToOriginalValues(object release)
+    {
+        ((ReleaseModel)release).Version = elementBeforeEdit.Version;
+        ((ReleaseModel)release).PlatformName = elementBeforeEdit.PlatformName;
+        ((ReleaseModel)release).Status = elementBeforeEdit.Status;
+        ((ReleaseModel)release).MainIssue = elementBeforeEdit.MainIssue;
+        ((ReleaseModel)release).CompleteDate = elementBeforeEdit.CompleteDate;
+        StateHasChanged();
+    }
+
+    private async void ItemHasBeenCommitted(object release)
+    {
+        await ReleaseManager.Update((ReleaseModel)release);
+        await UpdateReleases();
+        StateHasChanged();
+    }
+    
+    private bool FilterFunc(ReleaseModel answer)
+    {
+        if (string.IsNullOrEmpty(_searchString))
+            return true;
+        if (answer.PlatformName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (answer.Status.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (answer.CompleteDate.ToString()!.Contains(_searchString))
+            return true;
+        return $"{answer.Version.Major}.{answer.Version.Minor}.{answer.Version.Patch}".Contains(_searchString);
+    }
+    
+    
+    private async Task Trans(ReleaseModel model)
+    {
+        await ReleaseManager.SetCompleteStatus(model.Id);
+        await UpdateReleases();
+        StateHasChanged();
+    }
+    
+    private async Task DeleteRelease(ReleaseModel model)
+    {
+        await ReleaseManager.Delete(model.Id);
+        await UpdateReleases();
+        StateHasChanged();
+    }
+    
+    private async Task Refresh()
+    {
+        await UpdateReleases();
+        StateHasChanged();
+    }
+}

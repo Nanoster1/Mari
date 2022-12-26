@@ -1,0 +1,48 @@
+﻿ @using Mari.Client.Models.Comments
+@inject ICommentManager CommentManager
+
+<MudPaper Elevation="0" Class="pt-2">
+    <MudStack > <!--TODO убрать дублирование кода-->
+        @foreach (var item in SystemComments)
+        {
+            <MudPaper Class="border-b pl-4 pb-4" Elevation="0">
+                <MudPaper Class=" d-flex" Elevation="0">
+                    <MudAvatar Color="Color.Primary">M</MudAvatar>
+                    <MudPaper Class="d-flex align-center pl-4" Elevation="0">
+                       <MudText>@item.UserName</MudText>    
+                    </MudPaper>
+                </MudPaper>
+                <MudPaper Elevation="0">
+                    <MudText>@item.CreateDate.ToString()</MudText>
+                </MudPaper>
+                <MudPaper Elevation="0">
+                    <MudText>Действие: @item.Content</MudText>
+                </MudPaper>
+            </MudPaper>
+        }
+    </MudStack> 
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public string ReleaseId { get; set; } = null!;
+
+    List<CommentModel> SystemComments { get; set; } = new List<CommentModel>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //SystemComments = await CommentManager.GetAllSystemComment(Guid.Parse(Id));
+        
+    // TODO Тестовые данные
+        /*SystemComments = new List<CommentModel>()
+        {
+            new CommentModel(Guid.NewGuid(), Guid.NewGuid(), 1, "Араб", "", "15.11.2022", false),
+            new CommentModel(Guid.NewGuid(), Guid.NewGuid(), 1, "Араб", "", "15.11.2022", false),
+            new CommentModel(Guid.NewGuid(), Guid.NewGuid(), 1, "Араб", "", "15.11.2022", false),
+            new CommentModel(Guid.NewGuid(), Guid.NewGuid(), 1, "Араб", "", "15.11.2022", false),
+
+        };*/
+    }
+} 

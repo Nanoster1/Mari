@@ -1,0 +1,46 @@
+@using Mari.Contracts.Common.Routes.Client
+@using System.Security.Claims
+<AuthorizeView>
+            <Authorized>
+                   <MudDrawerHeader>
+                       <MudPaper Elevation="0" Width="100%">
+                           <MudLink Href="@ClientRoutes.Pages.Index" Underline="Underline.None"
+                               Style="@($"color: {Colors.DeepPurple.Lighten3}")">
+                               <MudText Align="Align.Center">
+                                   @nameof(Mari)
+                               </MudText>
+                           </MudLink>
+                           <MudDivider DividerType="DividerType.Middle" />
+                       </MudPaper>
+                   </MudDrawerHeader>
+                <MudAvatar
+                    Class="mx-auto" Style="width: 5em; height: 5em;" Color="Color.Primary" Variant="Variant.Outlined">
+                    <MudIcon Icon="@Icons.Custom.Brands.MudBlazor" />
+                </MudAvatar>
+                   <MudPaper Elevation="0">
+                       <MudContainer Class="py-4" MaxWidth="MaxWidth.Medium">
+                           <MudText Align="Align.Center">
+                              @context.User.Identity?.Name
+                           </MudText>
+                   
+                           <MudText Align="Align.Center">
+                               @context.User.Claims.First( c => c.Type == ClaimTypes.Role).Value
+                           </MudText>
+                       </MudContainer>
+                   </MudPaper>
+                   <MudNavMenu Dense="true" Class="mx-auto" Margin="Margin.Normal">
+                   
+                       <MudNavLink Icon="@Icons.Filled.BuildCircle" IconColor="Color.Primary" Href="@ClientRoutes.Pages.Settings">
+                           <MudText>Пользователи</MudText>
+                       </MudNavLink>
+                   
+                       <MudNavLink Icon="@Icons.Filled.Archive" IconColor="Color.Primary" Href="@ClientRoutes.Pages.Archive">
+                           <MudText>Архив</MudText>
+                       </MudNavLink>
+                   
+                   </MudNavMenu>
+                   
+
+            </Authorized>
+</AuthorizeView>
+
