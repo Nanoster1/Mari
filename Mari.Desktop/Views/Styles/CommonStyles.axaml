@@ -1,0 +1,89 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:common="clr-namespace:Mari.Desktop.Views.Components.Common"
+        xmlns:components="clr-namespace:Mari.Desktop.Views.Components">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <Button Classes="app_bar-open_button"></Button>
+        </Border>
+    </Design.PreviewWith>
+
+    <Style Selector="Border.nav-panel-border">
+        <Setter Property="BorderThickness" Value="0, 0, 1, 0" />
+        <Setter Property="BorderBrush" Value="#ccc" />
+        <Setter Property="Width" Value="300" />
+    </Style>
+
+    <Style Selector=".nav-panel-border StackPanel.nav-panel">
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="Spacing" Value="7" />
+    </Style>
+
+    <Style Selector=".nav-panel StackPanel.nav-title">
+        <Setter Property="Orientation" Value="Vertical" />
+    </Style>
+
+    <Style Selector=".nav-title TextBlock.nav-title-text">
+        <Setter Property="FontSize" Value="30" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector=".nav-title Line.nav-line">
+        <Setter Property="StartPoint" Value="0, 0" />
+        <Setter Property="EndPoint" Value="240, 0" />
+        <Setter Property="Stroke" Value="#ccc" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector=".nav-panel common|Avatar.nav-avatar">
+        <Setter Property="Width" Value="100" />
+        <Setter Property="Height" Value="100" />
+    </Style>
+
+    <Style Selector=".nav-panel StackPanel.nav-identity">
+        <Setter Property="Spacing" Value="5" />
+        <Setter Property="Orientation" Value="Vertical" />
+    </Style>
+
+    <Style Selector=".nav-identity TextBlock.nav-name">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector=".nav-identity TextBlock.nav-role">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector=".nav-panel StackPanel.nav-buttons">
+        <Setter Property="Spacing" Value="4" />
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="Margin" Value="0, 7, 0, 0" />
+    </Style>
+
+    <Style Selector=".nav-buttons Button.nav-button">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Width" Value="200" />
+    </Style>
+
+    <Style Selector="components|AppBar.main-app_bar">
+        <Setter Property="Background" Value="#5fa1ed" />
+    </Style>
+
+    <Style Selector="Button.app_bar-open_button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="50"></Setter>
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Width" Value="50" />
+        <Setter Property="Height" Value="50" />
+        <Setter Property="Margin" Value="15, 0, 0, 5" />
+        <Setter Property="Content">
+            <Template>
+                <Image Source="/Assets/avalonia-logo.ico" Width="50" Height="50" />
+            </Template>
+        </Setter>
+    </Style>
+</Styles>

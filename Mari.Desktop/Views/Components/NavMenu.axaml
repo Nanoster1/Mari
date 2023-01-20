@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:common="clr-namespace:Mari.Desktop.Views.Components.Common"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="450"
+             x:Class="Mari.Desktop.Views.Components.NavMenu">
+
+    <Border Name="NavBorder" Classes="nav-panel-border">
+        <Border.Transitions>
+            <Transitions>
+                <DoubleTransition Property="Width" Duration="0:0:0.2" />
+            </Transitions>
+        </Border.Transitions>
+
+        <StackPanel Classes="nav-panel">
+            <StackPanel Classes="nav-title">
+                <TextBlock Classes="nav-title-text" Text="Mari" />
+                <Line Classes="nav-line" />
+            </StackPanel>
+            <common:Avatar Classes="nav-avatar" Source="/Assets/avalonia-logo.ico" />
+            <StackPanel Classes="nav-identity">
+                <TextBlock Classes="nav-name" Text="Name" />
+                <TextBlock Classes="nav-role" Text="Role" />
+            </StackPanel>
+            <StackPanel Classes="nav-buttons">
+                <Button Classes="nav-button">Пользователи</Button>
+                <Button Classes="nav-button">Архив</Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>
