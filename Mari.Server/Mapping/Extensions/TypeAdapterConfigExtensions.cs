@@ -4,9 +4,11 @@ namespace Mari.Server.Mapping.Extensions;
 
 public static class TypeAdapterConfigExtensions
 {
-    public static void MapRequests<TWebRequest, TApplicationRequest>(this TypeAdapterConfig config)
+    public static TypeAdapterSetter<TWebRequest, TApplicationRequest> MapRequests<TWebRequest, TApplicationRequest>(this TypeAdapterConfig config)
     {
-        config.ForType<TWebRequest, TApplicationRequest>()
-            .MapToConstructor(true);
+        return config.NewConfig<TWebRequest, TApplicationRequest>()
+            .MapToConstructor(true)
+            .RequireDestinationMemberSource(true)
+            .IgnoreNullValues(false);
     }
 }
